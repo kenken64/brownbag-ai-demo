@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+
+# Database
+*.db
+*.db-journal
+
+# Models and Checkpoints
+models/*.pkl
+!models/.gitkeep
+
+# Charts
+charts/*.png
+charts/*.jpg
+!charts/.gitkeep
+
+# Logs
+logs/*.log
+!logs/.gitkeep
+
+# Cache
+cache/*
+!cache/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Backups
+*_backup_*
+
+# Temp files
+*.tmp
+temp/
