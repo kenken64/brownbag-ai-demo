@@ -8,13 +8,13 @@ Please generate a comprehensive Product Requirements Document for the following 
 ## **PRODUCT CONTEXT**
 
 ### Product Information
-- **Existing Product**: [Your Crypto Trading Bot Name & Version]
-- **Current Architecture**: [Brief tech stack overview - Python/Node.js, etc.]
-- **Primary Exchange**: Binance (Spot & Futures)
+- **Existing Product**: AI-Driven Cryptocurrency Binance Futures Trading System v3.0
+- **Current Architecture**: Python
+- **Primary Exchange**: Binance (Futures)
 - **New Enhancement**: Market Spike AI Agent powered by CrewAI with Circuit Breaker Protection
 - **Integration Type**: Embedded module within existing bot
-- **Target Release**: [Q#/Month/Year]
-- **Document Owner**: [Your Name/Team]
+- **Target Release**: Q4
+- **Document Owner**: Kenneth Phang
 
 ### Key Features
 1. **Market Spike Detection & Trading** - Identify and capitalize on sudden price movements
