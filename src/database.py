@@ -202,6 +202,105 @@ class TradingDatabase:
             )
         ''')
 
+        # CrewAI Multi-Agent tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS spike_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                trading_pair TEXT NOT NULL,
+                spike_type TEXT NOT NULL,  -- spot_price_spike, futures_spot_divergence, volume_explosion, etc.
+                direction TEXT NOT NULL,  -- pump, dump
+                magnitude_percent REAL NOT NULL,
+                timeframe_minutes INTEGER NOT NULL,
+                volume_multiplier REAL,
+                price_from REAL NOT NULL,
+                price_to REAL NOT NULL,
+                confidence_score REAL,
+                detection_latency_ms INTEGER,  -- Latency from price change to detection
+                agent_detected_by TEXT,  -- Which agent detected it
+                status TEXT DEFAULT 'detected',  -- detected, analyzed, traded, skipped
+                skip_reason TEXT,
+                context_analysis TEXT,  -- JSON with analysis details
+                risk_assessment TEXT,  -- JSON with risk assessment
+                trade_id INTEGER,  -- Link to trades table if executed
+                outcome TEXT,  -- profitable, unprofitable, pending
+                pnl REAL,
+                FOREIGN KEY (trade_id) REFERENCES trades(id)
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS circuit_breaker_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                triggered_at DATETIME NOT NULL,
+                cleared_at DATETIME,
+                trigger_reason TEXT NOT NULL,
+                trigger_type TEXT NOT NULL,  -- btc_dump, eth_dump, market_wide, liquidations, systemic
+                status TEXT NOT NULL,  -- triggered, recovering, cleared, false_trigger
+                btc_price_at_trigger REAL,
+                eth_price_at_trigger REAL,
+                btc_drop_percent REAL,
+                eth_drop_percent REAL,
+                market_cap_drop_percent REAL,
+                liquidations_1h REAL,
+                fear_greed_index INTEGER,
+                trigger_details TEXT,  -- JSON with detailed metrics
+                market_snapshot TEXT,  -- JSON with full market snapshot
+                downtime_seconds INTEGER,
+                capital_saved REAL DEFAULT 0.0,
+                orders_cancelled INTEGER DEFAULT 0,
+                positions_affected INTEGER DEFAULT 0,
+                recovery_time_seconds INTEGER,
+                recovery_conditions_met TEXT,  -- JSON with recovery conditions
+                user_notified BOOLEAN DEFAULT 0,
+                notes TEXT
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS agent_decisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                agent_name TEXT NOT NULL,  -- market_guardian, market_scanner, context_analyzer, etc.
+                agent_role TEXT NOT NULL,
+                decision_type TEXT NOT NULL,  -- spike_detected, risk_assessed, trade_approved, circuit_breaker_triggered, etc.
+                decision TEXT NOT NULL,  -- The actual decision (e.g., "APPROVE", "REJECT", "TRIGGER")
+                confidence REAL,
+                reasoning TEXT,  -- Agent's reasoning for the decision
+                input_data TEXT,  -- JSON with input data to the agent
+                output_data TEXT,  -- JSON with agent's output
+                execution_time_ms INTEGER,  -- How long the agent took
+                spike_event_id INTEGER,  -- Link to spike_events if applicable
+                circuit_breaker_event_id INTEGER,  -- Link to circuit_breaker_events if applicable
+                trade_id INTEGER,  -- Link to trades if applicable
+                FOREIGN KEY (spike_event_id) REFERENCES spike_events(id),
+                FOREIGN KEY (circuit_breaker_event_id) REFERENCES circuit_breaker_events(id),
+                FOREIGN KEY (trade_id) REFERENCES trades(id)
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS agent_performance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                agent_name TEXT NOT NULL,
+                period TEXT NOT NULL,  -- daily, weekly, monthly
+                total_decisions INTEGER DEFAULT 0,
+                correct_decisions INTEGER DEFAULT 0,
+                incorrect_decisions INTEGER DEFAULT 0,
+                accuracy_percent REAL DEFAULT 0.0,
+                avg_confidence REAL DEFAULT 0.0,
+                avg_execution_time_ms REAL DEFAULT 0.0,
+                total_spikes_detected INTEGER DEFAULT 0,
+                true_positives INTEGER DEFAULT 0,
+                false_positives INTEGER DEFAULT 0,
+                false_negatives INTEGER DEFAULT 0,
+                circuit_breaker_triggers INTEGER DEFAULT 0,
+                false_circuit_breaker_triggers INTEGER DEFAULT 0,
+                notes TEXT
+            )
+        ''')
+
         # Create indexes for better query performance
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_signals_timestamp ON signals(timestamp)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp)')
@@ -209,8 +308,18 @@ class TradingDatabase:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_market_context_timestamp ON market_context(timestamp)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_chart_analyses_timestamp ON chart_analyses(timestamp)')
 
+        # Indexes for CrewAI Multi-Agent tables
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spike_events_timestamp ON spike_events(timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spike_events_status ON spike_events(status)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_spike_events_trading_pair ON spike_events(trading_pair)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_circuit_breaker_events_triggered_at ON circuit_breaker_events(triggered_at)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_circuit_breaker_events_status ON circuit_breaker_events(status)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_agent_decisions_timestamp ON agent_decisions(timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_agent_decisions_agent_name ON agent_decisions(agent_name)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_agent_performance_agent_name ON agent_performance(agent_name)')
+
         conn.commit()
-        print("✅ Database initialized successfully")
+        print("✅ Database initialized successfully with CrewAI Multi-Agent tables")
 
     def insert_signal(self, signal_data: Dict[str, Any]) -> int:
         """Insert a new trading signal"""
