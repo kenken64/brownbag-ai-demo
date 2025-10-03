@@ -49,6 +49,11 @@ echo -e "3️⃣  Stopping Web Dashboard..."
 WEB_STOP=$?
 
 echo ""
+echo -e "4️⃣  Stopping MCP Server..."
+"$SCRIPT_DIR/start_mcp_server.sh" stop
+MCP_STOP=$?
+
+echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -76,6 +81,11 @@ echo -e "3️⃣  Starting Web Dashboard..."
 WEB_START=$?
 
 echo ""
+echo -e "4️⃣  Starting MCP Server..."
+"$SCRIPT_DIR/start_mcp_server.sh" start
+MCP_START=$?
+
+echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -97,16 +107,27 @@ fi
 
 if [ $WEB_START -eq 0 ]; then
     display_status "Web Dashboard" "success"
-
-    # Get port from .env
-    PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-    if [ -f "$PROJECT_DIR/.env" ]; then
-        PORT=$(grep DASHBOARD_PORT "$PROJECT_DIR/.env" | cut -d '=' -f2)
-        PORT=${PORT:-5000}
-        echo -e "\n${GREEN}🌐 Dashboard URL: http://localhost:$PORT${NC}"
-    fi
 else
     display_status "Web Dashboard" "error"
+fi
+
+if [ $MCP_START -eq 0 ]; then
+    display_status "MCP Server" "success"
+else
+    display_status "MCP Server" "error"
+fi
+
+# Get ports from .env
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+if [ -f "$PROJECT_DIR/.env" ]; then
+    DASHBOARD_PORT=$(grep DASHBOARD_PORT "$PROJECT_DIR/.env" | cut -d '=' -f2)
+    DASHBOARD_PORT=${DASHBOARD_PORT:-5000}
+    MCP_PORT=$(grep MCP_PORT "$PROJECT_DIR/.env" | cut -d '=' -f2)
+    MCP_PORT=${MCP_PORT:-3000}
+
+    echo ""
+    echo -e "${GREEN}🌐 Dashboard URL: http://localhost:$DASHBOARD_PORT${NC}"
+    echo -e "${GREEN}🔌 MCP API URL: http://localhost:$MCP_PORT/api/v1/info${NC}"
 fi
 
 echo ""
@@ -114,7 +135,7 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # Exit with error if any service failed
-if [ $RL_START -ne 0 ] || [ $CHART_START -ne 0 ] || [ $WEB_START -ne 0 ]; then
+if [ $RL_START -ne 0 ] || [ $CHART_START -ne 0 ] || [ $WEB_START -ne 0 ] || [ $MCP_START -ne 0 ]; then
     echo -e "${YELLOW}⚠️  Some services failed to start. Check logs for details.${NC}"
     exit 1
 fi
