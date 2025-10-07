@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crypto Trading Bot Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot"></i> AI Crypto Trading Bot
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="sessionTimer">Session: --:--</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('change_pin') }}">
+                            <i class="fas fa-key"></i> Change PIN
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Top Row: Bot Status and Controls -->
+        <div class="row mb-3">
+            <!-- Bot Status Panel -->
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-robot"></i> RL Bot Status
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Status:</strong> <span id="botStatus" class="badge bg-success">RUNNING</span></p>
+                                <p><strong>PID:</strong> <span id="botPid">-</span></p>
+                                <p><strong>Last Update:</strong> <span id="botLastUpdate">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Trade Execution:</strong> <span id="tradeExecution" class="badge bg-success">ENABLED</span></p>
+                                <p><strong>Trading Mode:</strong> <span id="tradingMode" class="badge bg-info">AUTO</span></p>
+                                <p><strong>Total Signals:</strong> <span id="totalSignals">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Control Panel -->
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="fas fa-cogs"></i> Manual Controls
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label for="tradingPair" class="form-label">Trading Pair:</label>
+                                <select class="form-select" id="tradingPair">
+                                    <option value="SUIUSDC">SUI/USDC</option>
+                                    <option value="BTCUSDT">BTC/USDT</option>
+                                    <option value="ETHUSDT">ETH/USDT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tradingModeSelect" class="form-label">Trading Mode:</label>
+                                <select class="form-select" id="tradingModeSelect">
+                                    <option value="auto">Auto</option>
+                                    <option value="manual">Manual</option>
+                                    <option value="paper">Paper Trading</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-primary" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button class="btn btn-info" onclick="viewLogs()">
+                                <i class="fas fa-file-alt"></i> Logs
+                            </button>
+                            <button class="btn btn-warning" onclick="togglePause()">
+                                <i class="fas fa-pause"></i> Pause
+                            </button>
+                            <button class="btn btn-danger" onclick="emergencyClose()">
+                                <i class="fas fa-exclamation-triangle"></i> Emergency Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health Monitoring -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-heartbeat"></i> System Health Monitoring
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h6>CPU Usage</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div id="cpuProgress" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Memory Usage</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div id="memoryProgress" class="progress-bar bg-warning" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                                <small id="memoryDetails">0 GB / 0 GB</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Disk Usage</h6>
+                                <div class="progress mb-2" style="height: 25px;">
+                                    <div id="diskProgress" class="progress-bar bg-danger" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                                <small id="diskDetails">0 GB / 0 GB</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>API Rate Limits</h6>
+                                <p class="mb-0"><span id="apiLimits" class="badge bg-success">OK</span></p>
+                                <small>Binance: <span id="binanceRate">-</span></small><br>
+                                <small>OpenAI: <span id="openaiRate">-</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Context & Cross-Asset Analysis -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <i class="fas fa-globe"></i> Market Context & Cross-Asset Analysis
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <h6>BTC Price</h6>
+                                <p id="btcPrice" class="mb-0">$-</p>
+                                <small id="btcChange" class="text-muted">-</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h6>ETH Price</h6>
+                                <p id="ethPrice" class="mb-0">$-</p>
+                                <small id="ethChange" class="text-muted">-</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h6>BTC Dominance</h6>
+                                <p id="btcDominance" class="mb-0">-%</p>
+                            </div>
+                            <div class="col-md-2">
+                                <h6>Fear & Greed</h6>
+                                <p id="fearGreed" class="mb-0">-</p>
+                                <small class="text-muted">Neutral</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h6>Market Trend</h6>
+                                <p id="marketTrend" class="mb-0">-</p>
+                            </div>
+                            <div class="col-md-2">
+                                <h6>Market Regime</h6>
+                                <p id="marketRegime" class="mb-0">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Market Data and Position -->
+        <div class="row mb-3">
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="fas fa-chart-line"></i> Live Market Data
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Current Price:</strong> $<span id="currentPrice">-</span></p>
+                                <p><strong>RSI:</strong> <span id="rsi">-</span></p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>VWAP:</strong> $<span id="vwap">-</span></p>
+                                <p><strong>Signal:</strong> <span id="currentSignal" class="badge">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="fas fa-wallet"></i> Live Position
+                    </div>
+                    <div class="card-body">
+                        <div id="livePosition">
+                            <p class="text-center text-muted">No open positions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics and Trade Breakdown -->
+        <div class="row mb-3">
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-chart-bar"></i> Performance Metrics
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Win Rate:</strong> <span id="winRate">-%</span></p>
+                                <p><strong>Total PnL:</strong> $<span id="totalPnl" class="text-danger">-</span></p>
+                                <p><strong>Average Win:</strong> $<span id="avgWin">-</span></p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Risk-Reward:</strong> <span id="riskReward">-</span></p>
+                                <p><strong>Average Loss:</strong> $<span id="avgLoss">-</span></p>
+                                <p><strong>Total Trades:</strong> <span id="totalTrades">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-list"></i> Trade Breakdown
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Winning Trades:</strong> <span id="winningTrades" class="text-success">-</span></p>
+                                <p><strong>Losing Trades:</strong> <span id="losingTrades" class="text-danger">-</span></p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Max Loss:</strong> $<span id="maxLoss">-</span></p>
+                                <p><strong>Open Positions:</strong> <span id="openPositions">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Management UI -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-shield-alt"></i> Risk Management
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h6>Stop Loss</h6>
+                                <p id="stopLoss">-</p>
+                                <small class="text-muted">Default: 2%</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Take Profit</h6>
+                                <p id="takeProfit">-</p>
+                                <small class="text-muted">Targets: 3%, 5%, 10%</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Leverage</h6>
+                                <p id="leverage">50x</p>
+                                <small class="text-muted">CROSS Margin</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Position Mode</h6>
+                                <p id="positionMode">Hedge</p>
+                                <small class="text-muted">Risk Exposure: <span id="riskExposure">-%</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Analysis Results -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-brain"></i> AI Chart Analysis Results
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <h6>Recommendation</h6>
+                                <p><span id="aiRecommendation" class="badge bg-secondary">-</span></p>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Confidence</h6>
+                                <p id="aiConfidence">-</p>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>Current Price</h6>
+                                <p id="aiPrice">$-</p>
+                            </div>
+                            <div class="col-md-3">
+                                <h6>24h Change</h6>
+                                <p id="aiChange">-%</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Key Observations</h6>
+                                <ul id="keyObservations">
+                                    <li>Waiting for analysis...</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Risk Factors</h6>
+                                <ul id="riskFactors">
+                                    <li>Waiting for analysis...</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>AI Analysis</h6>
+                                <p id="aiAnalysis" class="text-muted">Waiting for chart analysis bot...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-3">
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-chart-area"></i> Cumulative PnL
+                    </div>
+                    <div class="card-body">
+                        <canvas id="pnlChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-signal"></i> Signal Strength Visualization
+                    </div>
+                    <div class="card-body">
+                        <canvas id="signalChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tables -->
+        <div class="row mb-3">
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <i class="fas fa-list-ul"></i> Recent Signals
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Signal</th>
+                                        <th>Strength</th>
+                                        <th>Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentSignalsTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <i class="fas fa-exchange-alt"></i> Recent Trades
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Side</th>
+                                        <th>Entry Price</th>
+                                        <th>PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTradesTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Positions Table -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="fas fa-folder-open"></i> Open Positions
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Side</th>
+                                        <th>Entry Price</th>
+                                        <th>Current Price</th>
+                                        <th>Size</th>
+                                        <th>Unrealized PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openPositionsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No open positions</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market News Section -->
+        <div class="row mb-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-newspaper"></i> Market News
+                    </div>
+                    <div class="card-body">
+                        <div id="marketNews">
+                            <p class="text-center text-muted">No news available</p>
+                        </div>
+                        <nav aria-label="News pagination" class="mt-3">
+                            <ul class="pagination justify-content-center" id="newsPagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#">Previous</a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Viewer Modal -->
+    <div class="modal fade" id="logModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">System Logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <select class="form-select" id="logTypeSelect">
+                                <option value="main">Main Bot</option>
+                                <option value="chart">Chart Analysis</option>
+                                <option value="web">Web Dashboard</option>
+                                <option value="rl">RL Bot</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="logSearch" placeholder="Search logs...">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary" onclick="loadLogs()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                            <button class="btn btn-secondary" onclick="downloadLogs()">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="autoScrollLogs" checked>
+                        <label class="form-check-label" for="autoScrollLogs">
+                            Auto-scroll
+                        </label>
+                    </div>
+                    <pre id="logContent" style="height: 500px; overflow-y: scroll; background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 5px;">Loading logs...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

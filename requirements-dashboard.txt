@@ -1,0 +1,14 @@
+# AI Crypto Trading Bot - Web Dashboard Requirements
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# System Monitoring
+psutil==5.9.6
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# For production deployment (optional)
+gunicorn==21.2.0
