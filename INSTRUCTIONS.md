@@ -3,8 +3,8 @@
 ### Part 1: Installing Claude Code
 
 1. **Prerequisites**
-   - Ensure you have a valid Anthropic API key
-   - Have Python 3.8+ installed on your system
+   - Claude Pro or Team subscription (recommended) OR Anthropic API key
+   - Node.js and npm installed on your system
    - Terminal/Command Prompt access
 
 2. **Installation Steps**
@@ -15,11 +15,11 @@
 
 3. **Configuration**
    ```bash
-   # Set your API key
+   # If using Claude Pro/Team subscription, authentication is handled automatically
+   # No API key configuration needed!
+
+   # If using Anthropic API key (optional):
    export ANTHROPIC_API_KEY="your-api-key-here"
-   
-   # Or create a config file
-   claude-code config --set api_key="your-api-key-here"
    ```
 
 4. **Verify Installation**
