@@ -24,8 +24,8 @@
 
 4. **Verify Installation**
    ```bash
-   claude-code --version
-   claude-code test
+   claude --version
+   claude test
    ```
 
 ### Part 2: Creating 4 Specialized Sub-Agents
@@ -85,19 +85,26 @@ agents:
 
 ### Part 3: Initialize Agents
 
-```bash
-# Initialize the multi-agent workspace
-claude-code init --multi-agent --config agents-config.yaml
+In Claude Code, run the following prompt:
 
-# Create agent directories
-mkdir -p agents/{frontend,backend,trading,ai}
-
-# Set up agent-specific contexts
-claude-code agent create frontend-dev --dir agents/frontend
-claude-code agent create backend-dev --dir agents/backend
-claude-code agent create trading-dev --dir agents/trading
-claude-code agent create ai-dev --dir agents/ai
 ```
+initialize all the sub agents based on the agents-config.yaml
+```
+
+This will:
+- Create all necessary directory structures for each agent workspace
+- Set up `src/frontend/`, `src/backend/`, `src/trading/`, and `src/ml/` directories
+- Create subdirectories specific to each agent's needs
+- Generate README.md documentation for each agent workspace
+- Create an `AGENTS.md` file with comprehensive multi-agent system documentation
+- Update `CLAUDE.md` with architecture information
+
+The initialization process creates:
+- **Frontend Agent**: components, pages, hooks, services, store, utils, types
+- **Backend Agent**: api, controllers, models, services, middleware, utils, config, tests
+- **Trading Agent**: strategies, indicators, risk, execution, backtest, signals, utils
+- **AI/ML Agent**: features, models, training, inference, evaluation, preprocessing, utils
+- **Additional folders**: `strategies/` and `models/` for trading and ML artifacts
 
 ### Part 4: Create the Main PRP File
 
@@ -152,7 +159,7 @@ Build a comprehensive AI-powered cryptocurrency trading bot with real-time analy
 
 ```bash
 # Estimate execution time for the entire PRP
-claude-code estimate-duration PRPs/ai-crypto-trading-bot.md
+claude /estimate-duration PRPs/ubs-ai-crypto-trading-bot.md
 
 # This will output something like:
 # Estimated Duration Analysis:
@@ -168,10 +175,10 @@ claude-code estimate-duration PRPs/ai-crypto-trading-bot.md
 
 ```bash
 # Execute the main PRP with automatic task delegation
-claude-code execute-prp PRPs/ai-crypto-trading-bot.md --delegate-auto
+claude execute-prp PRPs/ubs-ai-crypto-trading-bot.md --delegate-auto
 
 # Or manually delegate to specific agents
-claude-code execute-prp PRPs/ai-crypto-trading-bot.md \
+claude execute-prp PRPs/ubs-ai-crypto-trading-bot.md \
   --delegate frontend:frontend-dev \
   --delegate backend:backend-dev \
   --delegate trading:trading-dev \

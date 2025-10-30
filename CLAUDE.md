@@ -8,7 +8,16 @@ This is an AI-powered cryptocurrency trading system. The codebase is currently b
 
 ## Architecture
 
-[To be added as the project develops]
+This project uses a multi-agent architecture with four specialized agents:
+
+1. **Frontend Developer** (`src/frontend/`) - React/TypeScript UI with real-time WebSocket
+2. **Backend Developer** (`src/backend/`) - Node.js/Python APIs and database
+3. **Trading Systems Developer** (`src/trading/`) - Trading strategies and risk management
+4. **AI/ML Developer** (`src/ml/`) - Predictive models and feature engineering
+
+For detailed agent configuration and responsibilities, see [AGENTS.md](AGENTS.md).
+
+**Agent Configuration:** `agents-config.yaml`
 
 ## Development Commands
 
