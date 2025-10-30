@@ -9,13 +9,8 @@
 
 2. **Installation Steps**
    ```bash
-   # Install Claude Code via pip
-   pip install claude-code
-   
-   # Or install from source
-   git clone https://github.com/anthropic/claude-code.git
-   cd claude-code
-   pip install -e .
+   # Install Claude Code via npm
+   npm install -g @anthropic-ai/claude-code
    ```
 
 3. **Configuration**
