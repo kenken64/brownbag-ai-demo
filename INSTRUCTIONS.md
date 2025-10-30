@@ -232,9 +232,9 @@ claude interactive
 # Create a monitoring script
 cat > monitor-agents.sh << 'EOF'
 #!/bin/bash
-claude-code status --all-agents
-claude-code logs --tail 50
-claude-code progress PRPs/ai-crypto-trading-bot.md
+claude status --all-agents
+claude logs --tail 50
+claude progress PRPs/ubs-ai-crypto-trading-bot.md
 EOF
 
 chmod +x monitor-agents.sh
