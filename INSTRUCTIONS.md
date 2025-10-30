@@ -108,7 +108,7 @@ The initialization process creates:
 
 ### Part 4: Create the Main PRP File
 
-Create `PRPs/ai-crypto-trading-bot.md`:
+Create `PRPs/ubs-ai-crypto-trading-bot.md`:
 
 ```markdown
 # AI Crypto Trading Bot Development Plan
@@ -213,7 +213,7 @@ Create a `.claude-code-commands` file:
 
 ```bash
 # Start Claude Code in interactive mode
-claude-code interactive
+claude interactive
 
 # In the Claude Code prompt:
 > /estimate PRPs/ai-crypto-trading-bot.md
@@ -245,22 +245,22 @@ chmod +x monitor-agents.sh
 
 1. **Parallel Execution**: Claude Code can run agents in parallel to reduce total execution time
 
-2. **Progress Tracking**: Use `claude-code progress` to see real-time updates
+2. **Progress Tracking**: Use `claude progress` to see real-time updates
 
 3. **Agent Communication**: Agents can share context through a shared workspace:
    ```bash
-   claude-code workspace create --shared
+   claude workspace create --shared
    ```
 
 4. **Error Handling**: Set up retry logic:
    ```bash
-   claude-code config --set max_retries=3
-   claude-code config --set retry_delay=30
+   claude config --set max_retries=3
+   claude config --set retry_delay=30
    ```
 
 5. **Cost Optimization**: Monitor API usage:
    ```bash
-   claude-code usage --detailed
+   claude usage --detailed
    ```
 
 This setup provides a complete multi-agent development environment where each specialized agent can work on their domain while Claude Code coordinates the overall project execution. The system can estimate durations and automatically delegate tasks based on the PRP markdown specifications.
